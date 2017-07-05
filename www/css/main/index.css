@@ -1,0 +1,114 @@
+html,body {
+    padding:0;
+    margin:0;
+    height:100%;
+    min-height:100%;
+}
+
+.paddingbot10 {
+    padding-bottom: 10px;
+}
+
+#page-content {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+#calendar {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    position: relative;
+}
+
+#calendar-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.col-xs-custom {
+    width: calc(100% / 7);
+    float: left;
+    position: relative;
+}
+
+.cell-6 {
+    height: calc(100% / 6);
+}
+
+.cell-5 {
+    height: calc(100% / 5);
+}
+
+.cell-4 {
+    height: calc(100% / 4);
+}
+
+#calendar-bg .cell {
+    border: 1px solid #ccc;
+}
+
+.cell-row {
+    display: block;
+    width: 100%;
+}
+
+.cell-event {
+    background-color: #1b6d85;
+}
+
+#panel {
+    position: absolute;
+    top: 0;
+    background: transparent;
+    padding: 10px;
+    left: 0;
+    right: 0;
+    z-index: 1049;
+}
+
+#panel .btn {
+    cursor: pointer;
+}
+
+#loader-wrapper {
+    background: #FFFFFF;
+    opacity: 0.3;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1047;
+}
+
+#loader {
+    height: 12em;
+    margin: -6em 0px 0px -6em;
+    padding: 10px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 12em;
+    z-index: 1048;
+    opacity: 1;
+}
+
+#loader svg {
+    height: 12em;
+    width: 12em;
+}
+
+#loader svg path {
+    stroke-width: 0px;
+}
+
+#loader svg path {
+    fill: #44cbf8;
+    stroke: none;
+}
