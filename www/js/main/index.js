@@ -46,6 +46,113 @@ SPA.Calendar =
                 self.fillCellsWithDates( new Date( self.cur_year, self.cur_month, self.cur_day ) );
             }
         );
+
+        $('#calendar').on(
+            'click',
+            '.cell',
+            function()
+            {
+                self._showModal( i18n('event_add_title'), {} );
+            }
+        );
+    },
+    '_showModal': function( title, data )
+    {
+        var modal_body = '<input type="hidden" id="event-id" value="">' +
+        '<div>' +
+            '<div class="form-group">' +
+                '<input type="text" class="form-control" id="event-title" placeholder="' + i18n('event_modal_title') + '"/>' +
+            '</div>' +
+            '<div class="form-group col-md-6">' +
+                '<input type="text" class="form-control" id="event-date_from" value="' + SPA.DateHelper.formatDate(new Date()) + '"/>' +
+            '</div>' +
+            '<div class="form-group col-md-6">' +
+                '<input type="text" class="form-control" id="event-date_till" value="' + SPA.DateHelper.formatDate(new Date()) + '"/>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<textarea class="form-control" id="event-description"></textarea>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<select class="form-control" id="event-status">' +
+                    '<option value="1">To Do</option>' +
+                    '<option value="2">In Progress</option>' +
+                    '<option value="3">Done</option>' +
+                '</select>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<input type="color" id="event-color" value="#ff0000">' +
+            '</div>'
+        '</div>';
+        var modal_footer = '<div class="row">' +
+            '<div class="col-xs-6 text-left">' +
+                '<button type="button" class="btn btn-cancel" data-dismiss="modal" aria-label="Close">' + i18n('event_modal_cancel') + '</button>' +
+            '</div>' +
+            '<div class="col-xs-6 text-right">' +
+                '<button type="button" class="btn btn-primary" id="event-save">' + i18n('event_modal_save') + '</button>' +
+            '</div>' +
+        '</div>';
+        SPA.Modals.get(
+            'event',
+            {
+                'title' : title,
+                'body'  : modal_body,
+                'footer': modal_footer
+            },
+            function( $modal )
+            {
+                $.datepicker.setDefaults(
+                    $.extend(
+                        {
+                            dateFormat : 'yy-mm-dd'
+                        },
+                        $.datepicker.regional['ru']
+                    )
+                );
+                $.timepicker.setDefaults(
+                    $.extend(
+                        {
+                            timeFormat : 'HH:mm'
+                        },
+                        $.timepicker.regional['ru']
+                    )
+                );
+
+                $('#event-date_from, #event-date_till').datetimepicker({
+                    dateFormat : 'yy-mm-dd',
+                    timeFormat : 'HH:mm'
+                }).trigger('change');
+
+                $('#event-save').on(
+                    'click',
+                    function()
+                    {
+                        $.ajax({
+                            'dataType'  : 'json',
+                            'method'    : 'post',
+                            'data'      : {
+                                'id'            : $('#event-id').val(),
+                                'title'         : $('#event-title').val(),
+                                'date_from'     : $('#event-date_from').val(),
+                                'date_till'     : $('#event-date_till').val(),
+                                'description'   : $('#event-description').val(),
+                                'status'        : $('#event-status').val(),
+                                'color'         : $('#event-color').val()
+                            },
+                            'timeout'   : 60000,
+                            'url'       : '/ajax/events/upsert',
+                            'success'   : function (data, textStatus, jqXHR)
+                            {
+                                console.log( data );
+                            },
+                            'error'     : function (jqXHR, textStatus, errorThrown)
+                            {
+                                SPA.Error.show( i18n('main_index_event_error') );
+                            },
+                        });
+                    }
+                );
+            }
+        ).modal('show');
     },
     updateDateVars: function( date )
     {
@@ -85,11 +192,11 @@ SPA.Calendar =
     {
         return '<div class="col-xs-custom cell cell-' + num_rows + '">' +
             '<span class="cell-row cell-date">' + date + '</span>' +
-            '</div>';
+        '</div>';
     },
     _renderCell: function( data, num_rows )
     {
-        var html = '<div class="col-xs-custom cell-' + num_rows + '">' +
+        var html = '<div class="col-xs-custom cell cell-' + num_rows + '">' +
             '<span class="cell-row cell-date">&nbsp;</span>';
         data.forEach(function( item )
         {
@@ -115,7 +222,29 @@ SPA.DateHelper =
     },
     getDaysInMonth: function( date )
     {
-        return new Date(date.getYear(), date.getMonth()+1, 0).getDate();
+        return new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+    },
+    'formatDate': function( date )
+    {
+        var self = SPA.DateHelper;
+        return date.getFullYear() + '-' +
+            self._pad( date.getMonth() ) + '-' +
+            self._pad( date.getDate() ) + ' ' +
+            self._pad( date.getHours() ) + ':' +
+            self._pad( date.getMinutes() );
+    },
+    '_pad': function( string, length, pad )
+    {
+        string = string.toString();
+        length = length || 2;
+        pad = pad || '0';
+
+        var res = '';
+        if ( string.length < length ) {
+            for( var i = 0, n = length-string.length; i < n; ++i )
+                res += pad;
+        }
+        return res + string;
     }
 };
 
@@ -140,7 +269,6 @@ SPA.Login =
                     'dataType'  : 'json',
                     'method'    : 'post',
                     'data'      : {
-                        'csrftoken' : getCsrfToken(),
                         'email'     : $('#login-email').val(),
                         'password'  : $('#login-password').val()
                     },
@@ -148,7 +276,9 @@ SPA.Login =
                     'url'       : '/ajax/auth/login',
                     'success'   : function (data, textStatus, jqXHR)
                     {
-                        console.log( data );
+                        SPA.Login.hide();
+                        SPA.Calendar.init();
+                        SPA.Loader.hide();
                     },
                     'error'     : function (jqXHR, textStatus, errorThrown)
                     {
@@ -197,7 +327,8 @@ SPA.Login =
     },
     'hide': function()
     {
-
+        var self = SPA.Login;
+        SPA.Modals.get('login').modal('hide');
     },
     '_showModal': function()
     {
@@ -217,7 +348,13 @@ SPA.Login =
                 '<button type="button" class="btn btn-success" id="login-submit">' + i18n('login_modal_login') + '</button>' +
             '</div>' +
         '</div>';
-        SPA.Modals.get('login', i18n('login_modal_title'), modal_body, modal_footer).modal('show');
+        SPA.Modals.get(
+            'login',
+            {
+                'title' : i18n('login_modal_title'),
+                'body'  : modal_body,
+                'footer': modal_footer
+            }).modal('show');
     }
 };
 
@@ -245,7 +382,12 @@ SPA.Error =
 {
     'show': function( text )
     {
-        SPA.Modals.get('errors', i18n('error_modal_title'), text).modal('show');
+        SPA.Modals.get(
+            'errors',
+            {
+                'title': i18n('error_modal_title'),
+                'body' : text
+            }).modal('show');
     },
     'hide': function()
     {
@@ -258,43 +400,61 @@ SPA.Modals = (function()
     var _ids = [];
 
     var self = {};
-    self.get = function( id, title, body, footer )
+    self.get = function( id, parts, afterCreate )
     {
-        title   = title || '';
-        body    = body || '';
-        footer  = footer || '<div class="row">' +
-            '<div class="col-md-12 text-right">' +
-                '<button type="button" class="btn btn-default" data-dismiss="modal">' + i18n('modal_close') + '</button>' +
-            '</div>' +
-        '</div>';
+        parts = $.extend(
+            true,
+            {},
+            {
+                'title'     : '',
+                'body'      : '',
+                'footer'    : '<div class="row">' +
+                    '<div class="col-md-12 text-right">' +
+                        '<button type="button" class="btn btn-default" data-dismiss="modal">' + i18n('modal_close') + '</button>' +
+                    '</div>' +
+                '</div>'
+            },
+            parts
+        );
+
+        if ( typeof afterCreate !== 'function' )
+        {
+            afterCreate = function(){};
+        }
+
+        var $modal = null;
 
         if ( _ids.indexOf( id ) > -1 )
         {
-            var $modal = $('#' + id);
-            $modal.find('.modal-title').first().html( title );
-            $modal.find('.modal-body').first().html( body );
-            $modal.find('.modal-footer').first().html( footer );
+            $modal = $('#' + id);
+            $modal.find('.modal-title').first().html( parts['title'] );
+            $modal.find('.modal-body').first().html( parts['body'] );
+            $modal.find('.modal-footer').first().html( parts['footer'] );
             return $modal;
         }
 
         _ids.push( id );
 
-        return $('<div class="modal" tabindex="-1" role="dialog" id="' + id + '">' +
+        $modal = $('<div class="modal" tabindex="-1" role="dialog" id="' + id + '">' +
             '<div class="modal-dialog" role="document">' +
                 '<div class="modal-content">' +
                     '<div class="modal-header">' +
                         '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
-                        '<h4 class="modal-title">' + title +'</h4>' +
+                        '<h4 class="modal-title">' + parts['title'] +'</h4>' +
                     '</div>' +
                     '<div class="modal-body">' +
-                        body +
+                        parts['body'] +
                     '</div>' +
                     '<div class="modal-footer">' +
-                        footer +
+                        parts['footer'] +
                     '</div>' +
                 '</div>' +
             '</div>' +
         '</div>');
+
+        $modal.appendTo( $('body') );
+        afterCreate( $modal );
+        return $modal;
     };
 
     return self;

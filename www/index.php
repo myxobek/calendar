@@ -7,7 +7,7 @@ define( 'ROOT',            realpath(__DIR__. '/../src' ).'/' );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-defined( 'LANG_ALIAS' )         || define( 'LANG_ALIAS',            ( getenv('LANG_ALIAS')                                  ? getenv('LANG_ALIAS')          : 'ru' ) );
+defined( 'LANG_ALIAS' )         || define( 'LANG_ALIAS',            ( getenv('LANG_ALIAS')                                  ? getenv('LANG_ALIAS')          : 'en' ) );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -256,6 +256,28 @@ try
     $di->set( 'filter', function()
     {
         $filter = new \Phalcon\Filter();
+
+        $filter->add(
+            'ext/date',
+            function ($value) {
+                if ( strlen( $value ) > 0 && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $value ) )
+                {
+                    return $value;
+                }
+                return null;
+            }
+        );
+
+        $filter->add(
+            'ext/color',
+            function ($value) {
+                if ( strlen( $value ) > 0 && preg_match('/^#([0-9a-fA-F]{3}|[0-9A-Fa-f]{6})$/', $value ) )
+                {
+                    return $value;
+                }
+                return null;
+            }
+        );
 
         return $filter;
     }, true );

@@ -18,12 +18,16 @@ namespace controllers
             $this
                 ->assets
                 ->collection('css')
+                ->addCss('css/jquery-ui.css', true)
+                ->addCss('css/jquery-ui-timepicker-addon.min.css', true)
                 ->addCss('css/main/index.css', true)
             ;
 
             $this
                 ->assets
                 ->collection('js')
+                ->addJs('js/jquery-ui.js', true)
+                ->addJs('js/jquery-ui-timepicker-addon.min.js', true)
                 ->addJs('js/main/index.js', true)
             ;
 

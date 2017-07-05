@@ -13,6 +13,9 @@
                     <button type="button" class="btn btn-default" id="prev-month"><i class="glyphicon glyphicon-arrow-left"></i></button>
                     <button type="button" class="btn btn-default" id="next-month"><i class="glyphicon glyphicon-arrow-right"></i></button>
                 </div>
+                <div class="btn-group">
+                    <a href="/auth/logout" class="btn btn-danger"><i class="glyphicon glyphicon-log-out"></i></a>
+                </div>
             </div>
         </div>
         <div class="row" data-type="login">

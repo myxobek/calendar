@@ -83,6 +83,16 @@ WHERE email=:email AND password=crypt(:password, password)',
         ///////////////////////////////////////////////////////////////////////
 
         /**
+         * @return  mixed
+         */
+        public function isAdmin()
+        {
+            return $this->getDi()->get('session')->get('is_admin', 0);
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        /**
          * user::getSessionId
          *
          * @return          integer

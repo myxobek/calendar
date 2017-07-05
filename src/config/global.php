@@ -15,7 +15,7 @@ return
 
         'title'         =>
         [
-            'ru'    => 'Календарь'
+            'en'    => 'Calendar'
         ]
     ],
 ];

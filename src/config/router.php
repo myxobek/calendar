@@ -36,6 +36,32 @@ $router
         ])
     ->via( [ 'POST' ] );
 
+$router
+    ->add('/auth/logout',
+        [
+            'controller'    => 'auth',
+            'action'        => 'logout'
+        ])
+    ->via(['GET']);
+
+// events /////////////////////////////////////////////////////////////////////
+
+$router
+    ->add('/ajax/events/get',
+        [
+            'controller'    => 'events',
+            'action'        => 'ajaxGet'
+        ])
+    ->via(['POST']);
+
+$router
+    ->add('/ajax/events/upsert',
+        [
+            'controller'    => 'events',
+            'action'        => 'ajaxUpsert'
+        ])
+    ->via(['POST']);
+
 // homepage ///////////////////////////////////////////////////////////////////
 
 $router

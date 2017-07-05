@@ -63,5 +63,24 @@ namespace controllers
         }
 
         ///////////////////////////////////////////////////////////////////
+
+        /**
+         * Выход
+         */
+        public function logoutAction()
+        {
+            $this->session->destroy(true);
+
+            $this->response->redirect(
+                $this->url->get([
+                    'for'   => 'homepage'
+                ]),
+                302
+            );
+
+            return false;
+        }
+
+        ///////////////////////////////////////////////////////////////////
     }
 }
