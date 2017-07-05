@@ -26,23 +26,12 @@ namespace controllers
 
             ///////////////////////////////////////////////////////////////////
 
-            $email      = trim($this->request->getPost('email', 'email', ''));
-            $password   = trim($this->request->getPost('password', 'string', ''));
+            $date_from = trim($this->request->getPost('date_from', 'ext/date', ''));
+            $date_till = trim($this->request->getPost('date_till', 'ext/date', ''));
 
-            $users = new users();
-            if ( $users->login($email, $password) === true )
-            {
-                die(json_encode([
-                    'ok'    => 1,
-                    'id'    => $users->getId(),
-                ]));
-            }
-            else
-            {
-                die(json_encode([
-                    'error'     => 1
-                ]));
-            }
+            $events = new events();
+            $list = $events->getList( $date_from, $date_till );
+            die(json_encode($list));
         }
 
         ///////////////////////////////////////////////////////////////////
@@ -62,12 +51,25 @@ namespace controllers
             ///////////////////////////////////////////////////////////////////
 
             $id             = trim( $this->request->getPost('id', 'int', '') );
-            $title          = trim($this->request->getPost('title', 'string', ''));
-            $date_from      = trim($this->request->getPost('date_from', 'ext/date', ''));
-            $date_till      = trim($this->request->getPost('date_till', 'ext/date', ''));
-            $description    = trim($this->request->getPost('description', 'string', ''));
-            $status         = trim($this->request->getPost('status', 'int', ''));
-            $color          = trim($this->request->getPost('color', 'ext/color', ''));
+            $title          = trim($this->request->getPost('title', 'string', null));
+            $date_from      = trim($this->request->getPost('date_from', 'ext/date', null));
+            $date_till      = trim($this->request->getPost('date_till', 'ext/date', null));
+            $description    = trim($this->request->getPost('description', 'string', null));
+            $status         = trim($this->request->getPost('status', 'int', null));
+            $color          = trim($this->request->getPost('color', 'ext/color', null));
+
+            if ( strlen( $title ) === 0 ||
+                empty( $date_from ) || empty( $date_till ) ||
+                strtotime( $date_from ) > strtotime( $date_till ) ||
+                empty( $status ) ||
+                empty( $color )
+            )
+            {
+                die(json_encode([
+                    'error'     => 1,
+                    'message'   => $this->core->i18n('events_upsert_error_empty')
+                ]));
+            }
 
             $events = new events();
             $users = new users();

@@ -6,9 +6,61 @@ namespace models
     {
         ///////////////////////////////////////////////////////////////////
 
-        public function getPerMonth( $month, $user_id, $is_admin )
+        public function getList( $date_from, $date_till )
         {
+            $query = '
+SELECT 
+  *,
+  (
+      SELECT
+        row_to_json(z)
+      FROM
+      (
+        SELECT
+          id,
+          email
+        FROM
+          calendar.users
+        WHERE
+          id = e.author_id
+        LIMIT
+          1
+      ) as z
+  ) as "author",
+  date_part(\'day\', age(date_till::timestamp, date_from::timestamp) )::integer + 1 as "days_between"
+FROM 
+  calendar.events as e
+WHERE 
+  ( date_from BETWEEN :date_from AND :date_till ) OR
+  ( date_till BETWEEN :date_from AND :date_till )';
 
+            $binds = [
+                'date_from' => $date_from,
+                'date_till' => $date_till,
+            ];
+
+            $db = $this->getDI()->get('db')->exec([
+                'query' => $query,
+                'binds' => $binds,
+                'types' => [
+                    'date_from'     => \Phalcon\Db\Column::TYPE_DATETIME,
+                    'date_till'     => \Phalcon\Db\Column::TYPE_DATETIME,
+                    'author_id'     => \Phalcon\Db\Column::BIND_PARAM_INT,
+                ]
+            ]);
+
+            if ( !isset( $db['error'] ) )
+            {
+                $db = array_map(function($v)
+                {
+                    $v['date_from'] = date('Y-m-d H:i', strtotime( $v['date_from'] ) );
+                    $v['date_till'] = date('Y-m-d H:i', strtotime( $v['date_till'] ) );
+                    $v['author'] = json_decode( $v['author'], true );
+                    return $v;
+                }, $db);
+                return $db;
+            }
+            return [];
         }
 
         ///////////////////////////////////////////////////////////////////

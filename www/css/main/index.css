@@ -57,10 +57,7 @@ html,body {
 .cell-row {
     display: block;
     width: 100%;
-}
-
-.cell-event {
-    background-color: #1b6d85;
+    padding-left: 5px;
 }
 
 #panel {

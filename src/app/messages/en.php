@@ -13,4 +13,8 @@ return
 
     'page_error_404'    => 'Page Not Found',
 
+    // events /////////////////////////////////////////////////////////////////
+
+    "events_upsert_error_empty" => "Error. Please fill all fields"
+
 ];
