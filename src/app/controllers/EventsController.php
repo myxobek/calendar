@@ -2,8 +2,6 @@
 
 namespace controllers
 {
-
-    use models\event;
     use models\users;
     use models\events;
 

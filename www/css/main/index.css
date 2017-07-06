@@ -18,15 +18,16 @@ html,body {
 }
 
 #calendar {
-    margin: 0;
     padding: 0;
+    padding-top: 54px;
+    margin: 0;
     height: 100%;
     position: relative;
 }
 
 #calendar-bg {
     position: absolute;
-    top: 0;
+    top: 54px;
     left: 0;
     bottom: 0;
     right: 0;

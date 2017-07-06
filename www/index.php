@@ -231,7 +231,9 @@ try
     // session
     $di->set( 'session', function()
     {
-        $session = new \Phalcon\Session\Adapter\Files();
+        $session = new \Phalcon\Session\Adapter\Files([
+            'lifetime'  => 1800
+        ]);
 
         $session->start();
 

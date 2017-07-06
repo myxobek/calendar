@@ -5,7 +5,7 @@
     </div>
     <div id="panel">
         <div class="row" data-type="nav" style="display: none;">
-            <div class="col-md-12 text-right">
+            <div class="col-xs-12 text-right">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" id="reset-month"><i class="glyphicon glyphicon-asterisk"></i></button>
                 </div>
@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="row" data-type="login">
-            <div class="col-md-12 text-right">
+            <div class="col-xs-12 text-right">
                 <div class="btn-group">
                     <button type="button" id="login-show" class="btn btn-info">Войти</button>
                 </div>

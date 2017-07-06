@@ -5,9 +5,10 @@ var SPA =
 
 SPA.Calendar =
 {
-    cur_year    : null,
-    cur_month   : null,
-    cur_day     : null,
+    cur_year        : null,
+    cur_month       : null,
+    cur_day         : null,
+    is_btn_enabled  : true,
     init: function()
     {
         var self = SPA.Calendar;
@@ -20,11 +21,14 @@ SPA.Calendar =
             'click',
             function()
             {
-                var days_in_this_month  = SPA.DateHelper.getDaysInMonth( new Date( self.cur_year, self.cur_month, 1 ) );
-                var prev_date           = SPA.DateHelper.getDateInNextDays( new Date( self.cur_year, self.cur_month, self.cur_day ), -days_in_this_month );
-                self.fillCellsWithDates( prev_date );
-                self.updateDateVars( prev_date );
-                SPA.Events.refreshData();
+                if ( self.isBtnEnabled() )
+                {
+                    var days_in_this_month  = SPA.DateHelper.getDaysInMonth( new Date( self.cur_year, self.cur_month, 1 ) );
+                    var prev_date           = SPA.DateHelper.getDateInNextDays( new Date( self.cur_year, self.cur_month, self.cur_day ), -days_in_this_month );
+                    self.fillCellsWithDates( prev_date );
+                    self.updateDateVars( prev_date );
+                    SPA.Events.refreshData();
+                }
             }
         );
 
@@ -32,11 +36,14 @@ SPA.Calendar =
             'click',
             function()
             {
-                var days_in_this_month  = SPA.DateHelper.getDaysInMonth( new Date( self.cur_year, self.cur_month, 1 ) );
-                var next_date           = SPA.DateHelper.getDateInNextDays( new Date( self.cur_year, self.cur_month, self.cur_day ), days_in_this_month );
-                self.fillCellsWithDates( next_date );
-                self.updateDateVars( next_date );
-                SPA.Events.refreshData();
+                if ( self.isBtnEnabled() )
+                {
+                    var days_in_this_month  = SPA.DateHelper.getDaysInMonth( new Date( self.cur_year, self.cur_month, 1 ) );
+                    var next_date           = SPA.DateHelper.getDateInNextDays( new Date( self.cur_year, self.cur_month, self.cur_day ), days_in_this_month );
+                    self.fillCellsWithDates( next_date );
+                    self.updateDateVars( next_date );
+                    SPA.Events.refreshData();
+                }
             }
         );
 
@@ -44,11 +51,32 @@ SPA.Calendar =
             'click',
             function()
             {
-                self.updateDateVars( new Date() );
-                self.fillCellsWithDates( new Date( self.cur_year, self.cur_month, self.cur_day ) );
-                SPA.Events.refreshData();
+                if ( self.isBtnEnabled() )
+                {
+                    self.updateDateVars( new Date() );
+                    self.fillCellsWithDates( new Date( self.cur_year, self.cur_month, self.cur_day ) );
+                    SPA.Events.refreshData();
+                }
             }
         );
+    },
+    isBtnEnabled: function()
+    {
+        return SPA.Calendar.is_btn_enabled;
+    },
+    disableButtons: function()
+    {
+        $('#reset-month').attr('disabled', 'disabled');
+        $('#prev-month').attr('disabled', 'disabled');
+        $('#next-month').attr('disabled', 'disabled');
+        SPA.Calendar.is_btn_enabled = false;
+    },
+    enableButtons: function()
+    {
+        $('#reset-month').attr('disabled', false);
+        $('#prev-month').attr('disabled', false);
+        $('#next-month').attr('disabled', false);
+        SPA.Calendar.is_btn_enabled = true;
     },
     updateDateVars: function( date )
     {
@@ -97,7 +125,7 @@ SPA.Calendar =
             '<span class="cell-row cell-date">&nbsp;</span>';
         data.forEach(function( item )
         {
-            html += '<span class="cell-row cell-event" ' +
+            html += '<span class="cell-row cell' + (( item === false ) ? '-no' : '') + '-event" data-id="' + ( item !== false ? item['id'] : 0 ) + '" ' +
                 'style="background-color: ' + ( item !== false ? item['color'] : '' ) + '; ">' +
                     ( item !== false ? item['title'] : '&nbsp;' )  +
                 '</span>';
@@ -108,6 +136,7 @@ SPA.Calendar =
     },
     renderEvents: function( data )
     {
+        data = $.extend(true, [], data);
         var bg_cells    = $('#calendar-bg').find('.cell');
         var cells       = $('#calendar').find('.cell');
         var levels      = {};
@@ -159,11 +188,19 @@ SPA.Calendar =
             $('#calendar').append( SPA.Calendar._renderCell(items, parseInt(cells.length / 7)) );
         }
     },
+    getFirstDate: function()
+    {
+        return  $('#calendar-bg').find('.cell').first().data('date');
+    },
+    getLastDate: function()
+    {
+        return $('#calendar-bg').find('.cell').last().data('date');
+    }
 };
 
 SPA.Events =
 {
-    data: [],
+    data: {},
     init: function()
     {
         var self = SPA.Events;
@@ -173,7 +210,37 @@ SPA.Events =
             '.cell',
             function()
             {
-                self._showModal( i18n('event_add_title'), {} );
+                var dates = $('#calendar-bg').children('.cell').toArray().map(function(v)
+                {
+                    return $(v).data('date');
+                });
+                var date = dates[ $('#calendar .cell').index(this) ];
+
+                self._showModal( i18n('event_add_title'), {
+                    'date_from': date,
+                    'date_till': date
+                } );
+            }
+        );
+
+        $('#calendar').on(
+            'click',
+            '.cell-event',
+            function(e)
+            {
+                e.stopPropagation();
+                var data    = self.data[ SPA.Calendar.getFirstDate() ];
+                var id      = +$(this).data('id');
+                var event   = {};
+                for( var i = 0, n = data.length; i < n; ++i )
+                {
+                    if ( +data[i]['id'] === id )
+                    {
+                        event = $.extend(true, {}, data[i]);
+                        break;
+                    }
+                }
+                self._showModal( i18n('event_add_title'), event );
             }
         );
 
@@ -182,55 +249,66 @@ SPA.Events =
     'refreshData': function()
     {
         var self = SPA.Events;
-        var date_from = $('#calendar-bg').find('.cell').first().data('date');
-        var date_till = $('#calendar-bg').find('.cell').last().data('date');
+        var date_from = SPA.Calendar.getFirstDate();
+        var date_till = SPA.Calendar.getLastDate();
 
-        $.ajax({
-            'dataType'  : 'json',
-            'method'    : 'post',
-            'data'      : {
-                'date_from' : date_from,
-                'date_till' : date_till
-            },
-            'timeout'   : 60000,
-            'url'       : '/ajax/events/get',
-            'success'   : function (data, textStatus, jqXHR)
-            {
-                self.data = data;
-                SPA.Calendar.renderEvents( self.data );
-            },
-            'error'     : function (jqXHR, textStatus, errorThrown)
-            {
-                SPA.Error.show( i18n('main_index_event_error') );
-            }
-        });
+        if ( !self.data.hasOwnProperty( date_from ) )
+        {
+            SPA.Loader.show();
+            SPA.Calendar.disableButtons();
+            $.ajax({
+                'dataType'  : 'json',
+                'method'    : 'post',
+                'data'      : {
+                    'date_from' : date_from,
+                    'date_till' : date_till
+                },
+                'timeout'   : 60000,
+                'url'       : '/ajax/events/get',
+                'success'   : function (data, textStatus, jqXHR)
+                {
+                    self.data[date_from] = data;
+                    SPA.Loader.hide();
+                    SPA.Calendar.enableButtons();
+                    SPA.Calendar.renderEvents( self.data[date_from] );
+                },
+                'error'     : function (jqXHR, textStatus, errorThrown)
+                {
+                    SPA.Error.show( i18n('main_index_event_error') );
+                }
+            });
+        }
+        else
+        {
+            SPA.Calendar.renderEvents( self.data[date_from] );
+        }
     },
     '_showModal': function( title, data )
     {
         var self = SPA.Events;
-        var modal_body = '<input type="hidden" id="event-id" value="">' +
+        var modal_body = '<input type="hidden" id="event-id" value="' + ( data['id'] || '' ) + '">' +
             '<div>' +
                 '<div class="form-group">' +
-                    '<input type="text" class="form-control" id="event-title" placeholder="' + i18n('event_modal_title') + '"/>' +
+                    '<input type="text" class="form-control" id="event-title" placeholder="' + i18n('event_modal_title') + '" value="' + ( data['title'] || '' ) + '"/>' +
                 '</div>' +
                 '<div class="form-group col-md-6">' +
-                    '<input type="text" class="form-control" id="event-date_from" value="' + SPA.DateHelper.formatDate(new Date()) + '"/>' +
+                    '<input type="text" class="form-control" id="event-date_from" value="' + ( data['date_from'] || SPA.DateHelper.formatDate(new Date()) ) + '"/>' +
                 '</div>' +
                 '<div class="form-group col-md-6">' +
-                    '<input type="text" class="form-control" id="event-date_till" value="' + SPA.DateHelper.formatDate(new Date()) + '"/>' +
+                    '<input type="text" class="form-control" id="event-date_till" value="' + ( data['date_till'] || SPA.DateHelper.formatDate(new Date()) ) + '"/>' +
                 '</div>' +
                 '<div class="form-group">' +
-                    '<textarea class="form-control" id="event-description"></textarea>' +
+                    '<textarea class="form-control" id="event-description">' + ( data['description'] || '' ) + '</textarea>' +
                 '</div>' +
                 '<div class="form-group">' +
                     '<select class="form-control" id="event-status">' +
-                        '<option value="1">To Do</option>' +
-                        '<option value="2">In Progress</option>' +
-                        '<option value="3">Done</option>' +
+                        '<option value="1" ' + ( data['status'] && +data['status'] === 1 ? 'selected' : '' ) + '>To Do</option>' +
+                        '<option value="2" ' + ( data['status'] && +data['status'] === 2 ? 'selected' : '' ) + '>In Progress</option>' +
+                        '<option value="3" ' + ( data['status'] && +data['status'] === 3 ? 'selected' : '' ) + '>Done</option>' +
                     '</select>' +
                 '</div>' +
                 '<div class="form-group">' +
-                    '<input type="color" id="event-color" value="#ff0000">' +
+                    '<input type="color" id="event-color" value="' + ( data['color'] || '#ff0000' ) + '">' +
                 '</div>' +
             '</div>';
         var modal_footer = '<div class="row">' +
@@ -276,7 +354,7 @@ SPA.Events =
                     'click',
                     function()
                     {
-                        var data = {
+                        var event = {
                             'id'            : $('#event-id').val(),
                             'title'         : $('#event-title').val(),
                             'date_from'     : $('#event-date_from').val(),
@@ -289,7 +367,7 @@ SPA.Events =
                         $.ajax({
                             'dataType'  : 'json',
                             'method'    : 'post',
-                            'data'      : data,
+                            'data'      : event,
                             'timeout'   : 60000,
                             'url'       : '/ajax/events/upsert',
                             'success'   : function (response, textStatus, jqXHR)
@@ -303,18 +381,19 @@ SPA.Events =
                                 }
                                 else
                                 {
-                                    var old_data_index = SPA.Events.data.findIndex(function(v)
+                                    var date_from = SPA.Calendar.getFirstDate();
+                                    var old_data_index = SPA.Events.data[date_from].findIndex(function(v)
                                     {
                                         return +v['id'] === +data['id'];
                                     });
-                                    data = $.extend(true, {}, data, {'id': response['id']});
+                                    event = $.extend(true, {}, event, {'id': response['id']});
                                     if ( old_data_index !== -1 )
                                     {
-                                        self.data[old_data_index] = $.extend(true, {}, data);
+                                        self.data[date_from][old_data_index] = $.extend(true, {}, event);
                                     }
                                     else
                                     {
-                                        self.data.push( data );
+                                        self.data[date_from].push( event );
                                     }
                                     self.refreshData();
                                     self._hideModal();
@@ -592,6 +671,7 @@ SPA.Modals = (function()
             $modal.find('.modal-title').first().html( parts['title'] );
             $modal.find('.modal-body').first().html( parts['body'] );
             $modal.find('.modal-footer').first().html( parts['footer'] );
+            afterCreate( $modal );
             return $modal;
         }
 
