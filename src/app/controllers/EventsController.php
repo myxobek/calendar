@@ -69,9 +69,9 @@ namespace controllers
                 ]));
             }
 
-            $events = new events();
-            $users = new users();
-            $data = [
+            $events     = new events();
+            $users      = new users();
+            $data       = [
                 'id'            => $id,
                 'title'         => $title,
                 'date_from'     => $date_from,

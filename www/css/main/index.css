@@ -72,6 +72,10 @@ html,body {
     white-space: nowrap;
 }
 
+.cell-inactive {
+    opacity: 0.3;
+}
+
 #calendar .cell {
     cursor: cell;
 }

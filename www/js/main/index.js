@@ -121,14 +121,14 @@ SPA.Calendar =
             cells.push( days_in_month++ );
         for( i = 0, n = cells.length; i < n; ++i )
         {
-            $('#calendar-bg').append( self._renderCellBg(
+            $('#calendar-bg').append( self.renderCellBg(
                 SPA.DateHelper.getDateInNextDays( first_month_date, cells[i] ),
                 parseInt(cells.length / 7) )
             );
-            $('#calendar').append( self._renderCell([], parseInt(cells.length / 7)) );
+            $('#calendar').append( self.renderCell([], parseInt(cells.length / 7)) );
         }
     },
-    _renderCellBg: function( date, num_rows )
+    renderCellBg: function( date, num_rows )
     {
         var date_day = date.getDate();
         date_day += ( +date_day === 1 ? ' ' + i18n('months', date.getMonth()) : '' );
@@ -137,7 +137,7 @@ SPA.Calendar =
             '<span class="cell-row cell-date">' + date_day + '</span>' +
         '</div>';
     },
-    _renderCell: function( data, num_rows )
+    renderCell: function( data, num_rows )
     {
         var html = '<div class="col-xs-custom cell cell-' + num_rows + '">' +
             '<span class="cell-row cell-date">&nbsp;</span>';
@@ -203,8 +203,41 @@ SPA.Calendar =
                 }
             }
 
-            $('#calendar').append( SPA.Calendar._renderCell(items, parseInt(cells.length / 7)) );
+            $('#calendar').append( SPA.Calendar.renderCell(items, parseInt(cells.length / 7)) );
         }
+
+        $('.cell').sortable({
+            items: '> .cell-event',
+            connectWith: '.cell',
+            helper: function(e, el)
+            {
+                var id      = +$(el).data('id');
+                var event   = SPA.Events.getEventById( id );
+                return $('<span class="cell-row" style="background-color: ' + event['color'] + '; ">' +
+                    ( '(' + ( SPA.DateHelper.daysBetween( event['date_from'], event['date_till'] ) + 1 ) + ') ' ) + event['title'] +
+                '</span>');
+            },
+            start: function(e, el)
+            {
+                $(el.item).show();
+                var id = +$(el.item).data('id');
+                $('#calendar').find('.cell-event[data-id="' + id + '"]').addClass('cell-inactive');
+            },
+            stop: function(e, el)
+            {
+                var date_from       = SPA.Calendar.getDateInCell( $(el.item).closest('.cell') );
+                SPA.Loader.show();
+                var id              = +$(el.item).data('id');
+                var event           = $.extend(true, {}, SPA.Events.getEventById( id ) );
+                var days_between    = SPA.DateHelper.daysBetween( event['date_from'], event['date_till'] );
+                var date_till       = SPA.DateHelper.formatDate(
+                    SPA.DateHelper.getDateInNextDays( new Date( Date.parse(date_from) ), days_between )
+                );
+                event['date_from'] = date_from;
+                event['date_till'] = date_till;
+                SPA.Events.sendChange( event );
+            },
+        });
     },
     getFirstDate: function()
     {
@@ -213,6 +246,14 @@ SPA.Calendar =
     getLastDate: function()
     {
         return $('#calendar-bg').find('.cell').last().data('date');
+    },
+    getDateInCell: function( _this )
+    {
+        var dates = $('#calendar-bg').children('.cell').toArray().map(function(v)
+        {
+            return $(v).data('date');
+        });
+        return dates[ $('#calendar .cell').index(_this) ];
     }
 };
 
@@ -227,13 +268,9 @@ SPA.Events = (function()
             '.cell',
             function()
             {
-                var dates = $('#calendar-bg').children('.cell').toArray().map(function(v)
-                {
-                    return $(v).data('date');
-                });
-                var date = dates[ $('#calendar .cell').index(this) ];
+                var date = SPA.Calendar.getDateInCell(this);
 
-                self._showModal( i18n('event_add_title'), {
+                self.showModal( i18n('event_add_title'), {
                     'date_from': date,
                     'date_till': date
                 } );
@@ -246,7 +283,7 @@ SPA.Events = (function()
             function(e)
             {
                 e.stopPropagation();
-                self._showModal(
+                self.showModal(
                     i18n('event_change_title'),
                     self.getEventById( $(this).data('id') ),
                     false,
@@ -300,11 +337,12 @@ SPA.Events = (function()
         }
         else
         {
+            SPA.Loader.hide();
             SPA.Calendar.renderEvents( cache[date_from] );
         }
     };
 
-    self._showModal = function( title, data, is_add, can_change )
+    self.showModal = function( title, data, is_add, can_change )
     {
         can_change  = typeof can_change === 'undefined' ? true : can_change;
         is_add      = typeof is_add     === 'undefined' ? true : is_add;
@@ -430,52 +468,7 @@ SPA.Events = (function()
                             'color'         : $('#event-color').val()
                         };
 
-                        $.ajax({
-                            'dataType'  : 'json',
-                            'method'    : 'post',
-                            'data'      : event,
-                            'timeout'   : 60000,
-                            'url'       : '/ajax/events/upsert',
-                            'success'   : function (response, textStatus, jqXHR)
-                            {
-                                if ( response.hasOwnProperty('error') )
-                                {
-                                    SPA.Error.show(
-                                        response['message'] ||
-                                        i18n('main_index_event_error')
-                                    );
-                                }
-                                else
-                                {
-                                    for( var date_from in cache )
-                                    {
-                                        if ( cache.hasOwnProperty( date_from ) )
-                                        {
-                                            var old_event = cache[date_from].find(function(v)
-                                            {
-                                                return +v['id'] === +response['id'];
-                                            });
-                                            $.extend(true, event, {'id': response['id']});
-                                            if ( typeof old_event !== 'undefined' )
-                                            {
-                                                $.extend(true, old_event, event);
-                                            }
-                                            else
-                                            {
-                                                event['author_id'] = SPA.User.getId();
-                                                cache[date_from].push( event );
-                                            }
-                                        }
-                                    }
-                                    self.refreshData();
-                                    self._hideModal();
-                                }
-                            },
-                            'error'     : function (jqXHR, textStatus, errorThrown)
-                            {
-                                SPA.Error.show( i18n('main_index_event_error') );
-                            },
-                        });
+                        self.sendChange( event );
                     }
                 );
 
@@ -519,7 +512,7 @@ SPA.Events = (function()
                                         }
                                     }
                                     self.refreshData();
-                                    self._hideModal();
+                                    self.hideModal();
                                 }
                             },
                             'error'     : function (jqXHR, textStatus, errorThrown)
@@ -533,7 +526,62 @@ SPA.Events = (function()
         ).modal('show');
     };
 
-    self._hideModal = function()
+    self.sendChange = function( event )
+    {
+        SPA.Loader.show();
+        $.ajax({
+            'dataType'  : 'json',
+            'method'    : 'post',
+            'data'      : event,
+            'timeout'   : 60000,
+            'url'       : '/ajax/events/upsert',
+            'success'   : function (response, textStatus, jqXHR)
+            {
+                if ( response.hasOwnProperty('error') )
+                {
+                    SPA.Error.show(
+                        response['message'] ||
+                        i18n('main_index_event_error')
+                    );
+                }
+                else
+                {
+                    for( var date_from in cache )
+                    {
+                        if ( cache.hasOwnProperty( date_from ) )
+                        {
+                            var old_event = cache[date_from].find(function(v)
+                            {
+                                return +v['id'] === +response['id'];
+                            });
+                            $.extend(true, event, {'id': response['id']});
+                            if ( typeof old_event !== 'undefined' )
+                            {
+                                $.extend(true, old_event, event);
+                            }
+                            else
+                            {
+                                event['author_id'] = SPA.User.getId();
+                                cache[date_from].push( event );
+                            }
+                        }
+                    }
+                }
+                self.hideModal();
+            },
+            'error'     : function (jqXHR, textStatus, errorThrown)
+            {
+                SPA.Error.show( i18n('main_index_event_error') );
+            },
+            'complete'  : function()
+            {
+                self.refreshData();
+                SPA.Loader.hide();
+            }
+        });
+    };
+
+    self.hideModal = function()
     {
         $('#event').modal('hide');
     };
@@ -555,12 +603,12 @@ SPA.Registration =
                 'click',
                 function()
                 {
-                    SPA.Registration._showInviteModal();
+                    SPA.Registration.showInviteModal();
                 }
             );
         }
     },
-    _showInviteModal: function()
+    showInviteModal: function()
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
@@ -625,7 +673,7 @@ SPA.Registration =
             }
         ).modal('show');
     },
-    _showModal: function()
+    showModal: function()
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
@@ -735,17 +783,17 @@ SPA.DateHelper =
     {
         var self = SPA.DateHelper;
         return  self.formatDateTillDay( date )+ ' ' +
-            self._pad( date.getHours() ) + ':' +
-            self._pad( date.getMinutes() );
+            self.pad( date.getHours() ) + ':' +
+            self.pad( date.getMinutes() );
     },
     'formatDateTillDay': function( date )
     {
         var self = SPA.DateHelper;
         return date.getFullYear() + '-' +
-            self._pad( date.getMonth()+1 ) + '-' +
-            self._pad( date.getDate() );
+            self.pad( date.getMonth()+1 ) + '-' +
+            self.pad( date.getDate() );
     },
-    '_pad': function( string, length, pad )
+    'pad': function( string, length, pad )
     {
         string = string.toString();
         length = length || 2;
@@ -767,6 +815,10 @@ SPA.DateHelper =
         return date_from <= date &&
             date <= date_till;
     },
+    daysBetween: function(first, second)
+    {
+        return Math.round( ( Date.parse(second)-Date.parse(first) ) /( 1000*60*60*24 ) );
+    }
 };
 
 SPA.User = null;
@@ -818,14 +870,13 @@ SPA.Login =
     'show': function()
     {
         var self = SPA.Login;
-        self._showModal();
+        self.showModal();
     },
     'hide': function()
     {
-        var self = SPA.Login;
         SPA.Modals.get('login').modal('hide');
     },
-    '_showModal': function()
+    'showModal': function()
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
@@ -857,7 +908,7 @@ SPA.Login =
                     'click',
                     function()
                     {
-                        SPA.Registration._showModal();
+                        SPA.Registration.showModal();
                         SPA.Login.hide();
                     }
                 );

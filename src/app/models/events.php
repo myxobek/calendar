@@ -102,6 +102,7 @@ VALUES (:title, :date_from, :date_till, :description, :author_id, :status, :colo
 
         public function change( $data )
         {
+            unset( $data['author_id'] );
             $db = $this->getDI()->get('db')->exec([
                 'query' => '
 UPDATE 
@@ -111,7 +112,6 @@ SET
     date_from = :date_from, 
     date_till = :date_till, 
     description = :description, 
-    author_id = :author_id, 
     status = :status, 
     color = :color
 WHERE id = :id',
@@ -122,7 +122,6 @@ WHERE id = :id',
                     'date_till'     => \Phalcon\Db\Column::TYPE_DATETIME,
                     'description'   => \Phalcon\Db\Column::TYPE_VARCHAR,
                     'status'        => \Phalcon\Db\Column::BIND_PARAM_INT,
-                    'author_id'     => \Phalcon\Db\Column::BIND_PARAM_INT,
                     'color'         => \Phalcon\Db\Column::BIND_PARAM_STR,
                     'id'            => \Phalcon\Db\Column::BIND_PARAM_INT
                 ]
