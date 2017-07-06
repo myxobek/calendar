@@ -32,7 +32,8 @@ FROM
   calendar.events as e
 WHERE 
   ( date_from BETWEEN :date_from AND :date_till ) OR
-  ( date_till BETWEEN :date_from AND :date_till )';
+  ( date_till BETWEEN :date_from AND :date_till ) OR 
+  ( ( :date_from BETWEEN date_from AND date_till ) AND ( :date_till BETWEEN date_from AND date_till ) )';
 
             $binds = [
                 'date_from' => $date_from,
@@ -69,7 +70,8 @@ WHERE
         {
             unset( $data['id'] );
             $db = $this->getDI()->get('db')->exec([
-                'query' => 'INSERT INTO calendar.events(
+                'query' => '
+INSERT INTO calendar.events(
 title, date_from, date_till, description, author_id, status, color)
 VALUES (:title, :date_from, :date_till, :description, :author_id, :status, :color) RETURNING id',
                 'binds'  => $data,
@@ -101,15 +103,17 @@ VALUES (:title, :date_from, :date_till, :description, :author_id, :status, :colo
         public function change( $data )
         {
             $db = $this->getDI()->get('db')->exec([
-                'query' => 'UPDATE calendar.events
+                'query' => '
+UPDATE 
+  calendar.events
 SET 
-title = :title,
-date_from = :date_from, 
-date_till = :date_till, 
-description = :description, 
-author_id = :author_id, 
-status = :status, 
-color = :color
+    title = :title,
+    date_from = :date_from, 
+    date_till = :date_till, 
+    description = :description, 
+    author_id = :author_id, 
+    status = :status, 
+    color = :color
 WHERE id = :id',
                 'binds'  => $data,
                 'types' => [
@@ -137,9 +141,66 @@ WHERE id = :id',
 
         ///////////////////////////////////////////////////////////////////
 
-        public function canChange( $event_id, $user_id )
+        public function canChange( $event_id, $user_id, $is_admin )
         {
-            p(1,1);
+            if ( $is_admin )
+            {
+                return true;
+            }
+
+            $query = '
+SELECT 
+  id
+FROM 
+  calendar.events as e
+WHERE 
+  id = :id
+  AND
+  author_id = :author_id
+LIMIT
+  1';
+
+            $binds = [
+                'id'        => $event_id,
+                'author_id' => $user_id,
+            ];
+
+            $db = $this->getDI()->get('db')->exec([
+                'query' => $query,
+                'binds' => $binds,
+                'types' => [
+                    'id'            => \Phalcon\Db\Column::BIND_PARAM_INT,
+                    'author_id'     => \Phalcon\Db\Column::BIND_PARAM_INT,
+                ]
+            ]);
+
+            return ( !isset( $db['error'] ) && !empty( $db ) );
+        }
+
+        ///////////////////////////////////////////////////////////////////
+
+        public function remove( $id )
+        {
+            $query = '
+DELETE 
+FROM 
+  calendar.events
+WHERE 
+  id = :id';
+
+            $binds = [
+                'id'    => $id,
+            ];
+
+            $db = $this->getDI()->get('db')->exec([
+                'query' => $query,
+                'binds' => $binds,
+                'types' => [
+                    'id'            => \Phalcon\Db\Column::BIND_PARAM_INT,
+                ]
+            ]);
+
+            return ( !isset( $db['error'] ) );
         }
 
         ///////////////////////////////////////////////////////////////////

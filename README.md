@@ -3,15 +3,17 @@
 Simple calendar
 
 ### Requires
-- Phalcon Frameword ( https://phalconphp.com/en/ )
+- Phalcon Framework ( https://phalconphp.com/en/download/linux )
 - PHP 7.0
-- PostgreSQL
+- PostgreSQL 9.5
 
 ### Install
 
-* install Nginx ( /nginx.conf )
+* install Nginx ( /src/data/nginx.conf )
 * install PHP7
-* install PostgreSQL
+* install PostgreSQL ( /src/data/db.conf, /src/data/sample.sql, change /src/config/global.php )
 
-### License
-Al rights reserved. See LICENSE.md for more detail
+### Demo account
+Email: admin@admin.admin
+
+Password: 11111111

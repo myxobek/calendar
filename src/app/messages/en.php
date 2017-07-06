@@ -15,6 +15,8 @@ return
 
     // events /////////////////////////////////////////////////////////////////
 
-    "events_upsert_error_empty" => "Error. Please fill all fields"
+    "events_upsert_error_empty"         => "Error. Please fill all fields",
+    "events_delete_error_empty"         => "Error. No event specified",
+    "events_delete_error_cannot_change" => "Error. You cannot change other users events"
 
 ];

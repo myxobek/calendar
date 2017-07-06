@@ -62,6 +62,14 @@ $router
         ])
     ->via(['POST']);
 
+$router
+    ->add('/ajax/events/delete',
+        [
+            'controller'    => 'events',
+            'action'        => 'ajaxDelete'
+        ])
+    ->via(['POST']);
+
 // homepage ///////////////////////////////////////////////////////////////////
 
 $router

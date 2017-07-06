@@ -29,6 +29,7 @@ i18n.translator.add({
         "event_add_title"       : "Create new event",
         "event_modal_title"     : "Title",
         "event_modal_save"      : "Save",
+        "event_modal_delete"    : "Delete",
         "event_modal_cancel"    : "Cancel",
         "main_index_event_error": "Error"
     }

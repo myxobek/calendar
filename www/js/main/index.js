@@ -219,7 +219,7 @@ SPA.Events =
                 self._showModal( i18n('event_add_title'), {
                     'date_from': date,
                     'date_till': date
-                } );
+                }, true );
             }
         );
 
@@ -283,8 +283,9 @@ SPA.Events =
             SPA.Calendar.renderEvents( self.data[date_from] );
         }
     },
-    '_showModal': function( title, data )
+    '_showModal': function( title, data, is_add )
     {
+        is_add = typeof is_add === 'undefined' ? false : is_add;
         var self = SPA.Events;
         var modal_body = '<input type="hidden" id="event-id" value="' + ( data['id'] || '' ) + '">' +
             '<div>' +
@@ -313,7 +314,11 @@ SPA.Events =
             '</div>';
         var modal_footer = '<div class="row">' +
             '<div class="col-xs-6 text-left">' +
-                '<button type="button" class="btn btn-cancel" data-dismiss="modal" aria-label="Close">' + i18n('event_modal_cancel') + '</button>' +
+                (
+                    is_add
+                    ? '<button type="button" class="btn btn-cancel" data-dismiss="modal" aria-label="Close">' + i18n('event_modal_cancel') + '</button>'
+                    : '<button type="button" class="btn btn-danger" id="event-delete"">' + i18n('event_modal_delete') + '</button>'
+                ) +
             '</div>' +
             '<div class="col-xs-6 text-right">' +
                 '<button type="button" class="btn btn-primary" id="event-save">' + i18n('event_modal_save') + '</button>' +
@@ -381,19 +386,24 @@ SPA.Events =
                                 }
                                 else
                                 {
-                                    var date_from = SPA.Calendar.getFirstDate();
-                                    var old_data_index = SPA.Events.data[date_from].findIndex(function(v)
+                                    for( var date_from in self.data )
                                     {
-                                        return +v['id'] === +data['id'];
-                                    });
-                                    event = $.extend(true, {}, event, {'id': response['id']});
-                                    if ( old_data_index !== -1 )
-                                    {
-                                        self.data[date_from][old_data_index] = $.extend(true, {}, event);
-                                    }
-                                    else
-                                    {
-                                        self.data[date_from].push( event );
+                                        if ( self.data.hasOwnProperty( date_from ) )
+                                        {
+                                            var old_data_index = self.data[date_from].findIndex(function(v)
+                                            {
+                                                return +v['id'] === +data['id'];
+                                            });
+                                            event = $.extend(true, {}, event, {'id': response['id']});
+                                            if ( old_data_index !== -1 )
+                                            {
+                                                self.data[date_from][old_data_index] = $.extend(true, {}, event);
+                                            }
+                                            else
+                                            {
+                                                self.data[date_from].push( event );
+                                            }
+                                        }
                                     }
                                     self.refreshData();
                                     self._hideModal();
@@ -406,6 +416,54 @@ SPA.Events =
                         });
                     }
                 );
+
+                $('#event-delete').on(
+                    'click',
+                    function()
+                    {
+                        var id = $('#event-id').val();
+
+                        $.ajax({
+                            'dataType'  : 'json',
+                            'method'    : 'post',
+                            'data'      : {
+                                'id'    : id
+                            },
+                            'timeout'   : 60000,
+                            'url'       : '/ajax/events/delete',
+                            'success'   : function (response, textStatus, jqXHR)
+                            {
+                                if ( response.hasOwnProperty('error') )
+                                {
+                                    SPA.Error.show(
+                                        response['message'] ||
+                                        i18n('main_index_event_error')
+                                    );
+                                }
+                                else
+                                {
+                                    for( var date_from in self.data )
+                                    {
+                                        if ( self.data.hasOwnProperty( date_from ) )
+                                        {
+                                            var data_index  = SPA.Events.data[date_from].findIndex(function(v)
+                                            {
+                                                return +v['id'] === +id;
+                                            });
+                                            SPA.Events.data[date_from].splice(data_index,1);
+                                        }
+                                    }
+                                    self.refreshData();
+                                    self._hideModal();
+                                }
+                            },
+                            'error'     : function (jqXHR, textStatus, errorThrown)
+                            {
+                                SPA.Error.show( i18n('main_index_event_error') );
+                            },
+                        });
+                    }
+                )
             }
         ).modal('show');
     },
