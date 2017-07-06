@@ -26,6 +26,14 @@ namespace controllers
             $email      = trim($this->request->getPost('email', 'email', ''));
             $password   = trim($this->request->getPost('password', 'string', ''));
 
+            if ( empty( $email ) || empty( $password ) )
+            {
+                die(json_encode([
+                    'error'     => 1,
+                    'message'   => $this->core->i18n('auth_login_error_empty')
+                ]));
+            }
+
             $users = new users();
             if ( $users->login($email, $password) === true )
             {
@@ -45,7 +53,7 @@ namespace controllers
         ///////////////////////////////////////////////////////////////////
 
         /**
-         * Проверка авторизации
+         * Check auth
          */
         public function ajaxLoginCheckAction()
         {
@@ -65,7 +73,7 @@ namespace controllers
         ///////////////////////////////////////////////////////////////////
 
         /**
-         * Выход
+         * Logout
          */
         public function logoutAction()
         {

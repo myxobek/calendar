@@ -18,6 +18,7 @@ i18n.translator.add({
         "modal_close"           : "Close",
         "error_modal_title"     : "Error",
 
+        "main_index_login_not_found"    : "User Not Found",
         "login_modal_title"     : "Sign In",
         "login_modal_email"     : "E-mail",
         "login_modal_password"  : "Password",
@@ -31,6 +32,17 @@ i18n.translator.add({
         "event_modal_save"      : "Save",
         "event_modal_delete"    : "Delete",
         "event_modal_cancel"    : "Cancel",
-        "main_index_event_error": "Error"
+        "main_index_event_error": "Error",
+
+        "invite_modal_title"    : "Invite new user",
+        "invite_modal_email"    : "E-mail",
+        "invite_modal_send"     : "Send",
+        "invite_modal_success"  : "Registration code was sent. Please check Inbox",
+
+        "registration_modal_title"      : "Registration",
+        "registration_modal_reg_code"   : "Registration code",
+        "registration_modal_password"   : "Password",
+        "registration_modal_submit"     : "Submit",
+        "registration_modal_success"    : "User successfully registered",
     }
 });

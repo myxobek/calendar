@@ -7,21 +7,24 @@
         <div class="row" data-type="nav" style="display: none;">
             <div class="col-xs-12 text-right">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-default" id="reset-month"><i class="glyphicon glyphicon-asterisk"></i></button>
+                    <button type="button" class="btn btn-default" id="registration-invite" title="<?= $this->core->i18n('btn_title_invite') ?>"><i class="glyphicon glyphicon-plus"></i></button>
                 </div>
                 <div class="btn-group">
-                    <button type="button" class="btn btn-default" id="prev-month"><i class="glyphicon glyphicon-arrow-left"></i></button>
-                    <button type="button" class="btn btn-default" id="next-month"><i class="glyphicon glyphicon-arrow-right"></i></button>
+                    <button type="button" class="btn btn-default" id="reset-month" title="<?= $this->core->i18n('btn_title_reset_month') ?>"><i class="glyphicon glyphicon-asterisk"></i></button>
                 </div>
                 <div class="btn-group">
-                    <a href="/auth/logout" class="btn btn-danger"><i class="glyphicon glyphicon-log-out"></i></a>
+                    <button type="button" class="btn btn-default" id="prev-month" title="<?= $this->core->i18n('btn_title_prev_month') ?>"><i class="glyphicon glyphicon-arrow-left"></i></button>
+                    <button type="button" class="btn btn-default" id="next-month" title="<?= $this->core->i18n('btn_title_next_month') ?>"><i class="glyphicon glyphicon-arrow-right"></i></button>
+                </div>
+                <div class="btn-group">
+                    <a href="/auth/logout" class="btn btn-danger" title="<?= $this->core->i18n('btn_title_logout') ?>"><i class="glyphicon glyphicon-log-out"></i></a>
                 </div>
             </div>
         </div>
         <div class="row" data-type="login">
             <div class="col-xs-12 text-right">
                 <div class="btn-group">
-                    <button type="button" id="login-show" class="btn btn-info">Войти</button>
+                    <button type="button" id="login-show" class="btn btn-info" title="<?= $this->core->i18n('btn_title_login') ?>"><i class="glyphicon glyphicon-log-in"></i></button>
                 </div>
             </div>
         </div>

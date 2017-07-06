@@ -474,6 +474,171 @@ SPA.Events =
     }
 };
 
+SPA.Registration =
+{
+    init: function()
+    {
+        var self = SPA.Registration;
+        $('#registration-invite').on(
+            'click',
+            function()
+            {
+                self._showInviteModal();
+            }
+        );
+    },
+    _showInviteModal: function()
+    {
+        var modal_body = '<div>' +
+            '<div class="form-group">' +
+                '<input type="text" class="form-control" id="invite-email" placeholder="' + i18n('invite_modal_email') + '" value=""/>' +
+            '</div>' +
+        '</div>';
+        var modal_footer = '<div class="row">' +
+            '<div class="col-xs-12 text-right">' +
+                '<button type="button" class="btn btn-primary" id="invite-send">' + i18n('invite_modal_send') + '</button>' +
+            '</div>' +
+        '</div>';
+        SPA.Modals.get(
+            'invite',
+            {
+                'title' : i18n('invite_modal_title'),
+                'body'  : modal_body,
+                'footer': modal_footer
+            },
+            function( $modal )
+            {
+                $('#invite-send').on(
+                    'click',
+                    function()
+                    {
+                        $.ajax({
+                            'dataType'  : 'json',
+                            'method'    : 'post',
+                            'data'      : {
+                                'email' : $('#invite-email').val()
+                            },
+                            'timeout'   : 60000,
+                            'url'       : '/ajax/registration/invite',
+                            'success'   : function (response, textStatus, jqXHR)
+                            {
+                                if ( response.hasOwnProperty('error') )
+                                {
+                                    SPA.Error.show(
+                                        response['message'] ||
+                                        i18n('main_index_event_error')
+                                    );
+                                }
+                                else
+                                {
+                                    $('#invite').modal('hide');
+                                    SPA.Modals.get(
+                                        'invite-success',
+                                        {
+                                            'title': 'Success',
+                                            'body' : i18n('invite_modal_success')
+                                        }
+                                    ).modal('show');
+                                }
+                            },
+                            'error'     : function (jqXHR, textStatus, errorThrown)
+                            {
+                                SPA.Error.show( i18n('main_index_event_error') );
+                            },
+                        });
+                    }
+                );
+            }
+        ).modal('show');
+    },
+    _showModal: function()
+    {
+        var modal_body = '<div>' +
+            '<div class="form-group">' +
+                '<input type="text" class="form-control" id="registration-reg_code" placeholder="' + i18n('registration_modal_reg_code') + '"/>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<input type="password" class="form-control" id="registration-password" placeholder="' + i18n('registration_modal_password') + '"/>' +
+            '</div>' +
+        '</div>';
+        var modal_footer = '<div class="row">' +
+            '<div class="col-xs-12 text-right">' +
+                '<button type="button" class="btn btn-primary" id="registration-submit">' + i18n('registration_modal_submit') + '</button>' +
+            '</div>' +
+        '</div>';
+        SPA.Modals.get(
+            'registration',
+            {
+                'title' : i18n('registration_modal_title'),
+                'body'  : modal_body,
+                'footer': modal_footer
+            },
+            function( $modal )
+            {
+                $('#registration').on(
+                    'hidden.bs.modal',
+                    function()
+                    {
+                        SPA.Login.show();
+                    }
+                );
+
+                $('#registration-submit').on(
+                    'click',
+                    function()
+                    {
+                        $.ajax({
+                            'dataType'  : 'json',
+                            'method'    : 'post',
+                            'data'      : {
+                                'reg_code'  : $('#registration-reg_code').val(),
+                                'password'  : $('#registration-password').val(),
+                            },
+                            'timeout'   : 60000,
+                            'url'       : '/ajax/registration',
+                            'success'   : function (response, textStatus, jqXHR)
+                            {
+                                if ( response.hasOwnProperty('error') )
+                                {
+                                    SPA.Error.show(
+                                        response['message'] ||
+                                        i18n('main_index_event_error')
+                                    );
+                                }
+                                else
+                                {
+                                    $('#registration').modal('hide');
+                                    $modal = SPA.Modals.get(
+                                        'registration-success',
+                                        {
+                                            'title': 'Success',
+                                            'body' : i18n('registration_modal_success')
+                                        },
+                                        function( $modal )
+                                        {
+                                            $modal.on(
+                                                'hidden.bs.modal',
+                                                function()
+                                                {
+                                                    SPA.Login.show();
+                                                }
+                                            );
+                                        }
+                                    ).modal('show');
+                                }
+                            },
+                            'error'     : function (jqXHR, textStatus, errorThrown)
+                            {
+                                SPA.Error.show( i18n('main_index_event_error') );
+                            },
+                        });
+                    }
+                );
+            }
+        ).modal('show');
+    }
+};
+
 SPA.DateHelper =
 {
     getFirstDateOfMonth: function( date )
@@ -537,35 +702,6 @@ SPA.Login =
             function()
             {
                 SPA.Login.show();
-            }
-        );
-
-        $('body').on(
-            'click',
-            '#login-submit',
-            function()
-            {
-                $.ajax({
-                    'dataType'  : 'json',
-                    'method'    : 'post',
-                    'data'      : {
-                        'email'     : $('#login-email').val(),
-                        'password'  : $('#login-password').val()
-                    },
-                    'timeout'   : 60000,
-                    'url'       : '/ajax/auth/login',
-                    'success'   : function (data, textStatus, jqXHR)
-                    {
-                        SPA.Login.hide();
-                        SPA.Calendar.init();
-                        SPA.Loader.hide();
-                        SPA.Events.init();
-                    },
-                    'error'     : function (jqXHR, textStatus, errorThrown)
-                    {
-                        SPA.Error.show( i18n('main_index_login_not_found') );
-                    }
-                });
             }
         );
     },
@@ -635,7 +771,56 @@ SPA.Login =
                 'title' : i18n('login_modal_title'),
                 'body'  : modal_body,
                 'footer': modal_footer
-            }).modal('show');
+            },
+            function () {
+                $('#register').on(
+                    'click',
+                    function()
+                    {
+                        SPA.Registration._showModal();
+                        SPA.Login.hide();
+                    }
+                );
+
+                $('#login-submit').on(
+                    'click',
+                    function()
+                    {
+                        $.ajax({
+                            'dataType'  : 'json',
+                            'method'    : 'post',
+                            'data'      : {
+                                'email'     : $('#login-email').val(),
+                                'password'  : $('#login-password').val()
+                            },
+                            'timeout'   : 60000,
+                            'url'       : '/ajax/auth/login',
+                            'success'   : function (data, textStatus, jqXHR)
+                            {
+                                if ( data.hasOwnProperty('error') )
+                                {
+                                    SPA.Error.show(
+                                        data['message'] ||
+                                        i18n('main_index_login_not_found')
+                                    );
+                                }
+                                else
+                                {
+                                    SPA.Login.hide();
+                                    SPA.Calendar.init();
+                                    SPA.Loader.hide();
+                                    SPA.Events.init();
+                                }
+                            },
+                            'error'     : function (jqXHR, textStatus, errorThrown)
+                            {
+                                SPA.Error.show( i18n('main_index_login_not_found') );
+                            }
+                        });
+                    }
+                );
+            }
+        ).modal('show');
     }
 };
 
@@ -764,6 +949,7 @@ $(document).ready(function()
 {
     SPA.Login.init();
     SPA.Loader.show();
+    SPA.Registration.init();
     SPA.Login.isAuth(
         function()
         {

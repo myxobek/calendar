@@ -16,7 +16,7 @@ namespace models
             {
                 $password = $this->_hashPassword($password);
                 $db = $this->getDI()->get('db')->exec([
-                    'query' => 'SELECT id, email, fetchval(options, \'is_admin\') as "is_admin" 
+                    'query' => 'SELECT id, email, options->\'is_admin\' as "is_admin" 
 FROM calendar.users 
 WHERE email=:email AND password=crypt(:password, password)',
                     'binds'  => [
@@ -29,7 +29,7 @@ WHERE email=:email AND password=crypt(:password, password)',
                     ]
                 ]);
 
-                if ( !empty( $db ) )
+                if ( !isset($db['error']) && !empty( $db ) )
                 {
                     $user = $db[0];
                     $this->setVars( $user );
@@ -48,7 +48,7 @@ WHERE email=:email AND password=crypt(:password, password)',
             $salt1 = 'qnFIF6FtYfjggwXnQx0QQlY5ycJdvhxsWaIU5XhNvQMwDAkO2JFfTFqkN3OAqNrKvk8seFUs0iEgcXsuXXZAO3bXz5zQ0zC4bARnwSFNkZeMG1h7wy79X0eKjCTjVsAY';
             $salt2 = '47dhdQJTr9eEKCgS1r7D72XTvkK9Lv92vzVbProoY4pGS9j7EpX6feT2OSyZkfaulChrlFOFsfkKGS76vwKIOGdHPQEKQHc49tp7G7Wx55zH9aYpNmesGADDbBz2rZFb';
 
-            return hash('sha512', $salt1 . $password . $salt2);
+            return hash('sha256', $salt1 . $password . $salt2);
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -123,6 +123,62 @@ WHERE email=:email AND password=crypt(:password, password)',
             }
 
             return true;
+        }
+
+        ///////////////////////////////////////////////////////////////////
+
+        public function addRegCode( $email, $reg_code )
+        {
+            $db = $this->getDI()->get('db')->exec([
+                'query' => 'INSERT INTO calendar.users(
+email, password, options)
+VALUES (:email, :password, :options) RETURNING id',
+                'binds'  => [
+                    'email'     => $email,
+                    'password'  => 'some weird passwd',
+                    'options'   => json_encode([
+                        'is_admin'  => 0,
+                        'reg_code'  => $reg_code
+                    ])
+                ],
+                'types' => [
+                    'email'     => \Phalcon\Db\Column::BIND_PARAM_STR,
+                    'password'  => \Phalcon\Db\Column::BIND_PARAM_STR,
+                    'options'   => \Phalcon\Db\Column::BIND_PARAM_STR
+                ]
+            ]);
+
+            return ( !isset($db['error']) && !empty( $db ) );
+        }
+
+        ///////////////////////////////////////////////////////////////////
+
+        public function activateRegCode( $reg_code, $password )
+        {
+            $password = $this->_hashPassword($password);
+            $db = $this->getDI()->get('db')->exec([
+                'query' => 'UPDATE calendar.users
+SET
+password = crypt(:password, gen_salt(\'bf\',10)),
+options  = :options
+WHERE
+(options->>\'reg_code\')::text = :reg_code
+RETURNING id',
+                'binds'  => [
+                    'password'  => $password,
+                    'options'   => json_encode([
+                        'is_admin'  => 0
+                    ]),
+                    'reg_code'  => $reg_code
+                ],
+                'types' => [
+                    'password'  => \Phalcon\Db\Column::BIND_PARAM_STR,
+                    'options'   => \Phalcon\Db\Column::BIND_PARAM_STR,
+                    'reg_code'  => \Phalcon\Db\Column::BIND_PARAM_STR
+                ]
+            ]);
+
+            return ( !isset($db['error']) && !empty( $db ) );
         }
 
         ///////////////////////////////////////////////////////////////////

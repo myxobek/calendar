@@ -34,7 +34,8 @@ $router
             'controller'    => 'auth',
             'action'        => 'ajaxLogin'
         ])
-    ->via( [ 'POST' ] );
+    ->via( [ 'POST' ] )
+    ->setName('auth_login');
 
 $router
     ->add('/auth/logout',
@@ -67,6 +68,24 @@ $router
         [
             'controller'    => 'events',
             'action'        => 'ajaxDelete'
+        ])
+    ->via(['POST']);
+
+// registration ///////////////////////////////////////////////////////////////
+
+$router
+    ->add('/ajax/registration/invite',
+        [
+            'controller'    => 'registration',
+            'action'        => 'ajaxInvite'
+        ])
+    ->via(['POST']);
+
+$router
+    ->add('/ajax/registration',
+        [
+            'controller'    => 'registration',
+            'action'        => 'ajaxIndex'
         ])
     ->via(['POST']);
 
