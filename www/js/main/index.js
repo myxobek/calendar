@@ -216,13 +216,12 @@ SPA.Calendar =
     }
 };
 
-SPA.Events =
+SPA.Events = (function()
 {
-    data: {},
-    init: function()
+    var cache = {};
+    var self = {};
+    self.init = function()
     {
-        var self = SPA.Events;
-
         $('#calendar').on(
             'click',
             '.cell',
@@ -247,20 +246,9 @@ SPA.Events =
             function(e)
             {
                 e.stopPropagation();
-                var data    = self.data[ SPA.Calendar.getFirstDate() ];
-                var id      = +$(this).data('id');
-                var event   = {};
-                for( var i = 0, n = data.length; i < n; ++i )
-                {
-                    if ( +data[i]['id'] === id )
-                    {
-                        event = $.extend(true, {}, data[i]);
-                        break;
-                    }
-                }
                 self._showModal(
                     i18n('event_change_title'),
-                    event,
+                    self.getEventById( $(this).data('id') ),
                     false,
                     SPA.User.isAdmin() || ( SPA.User.getId() === +event['author_id'] )
                 );
@@ -268,14 +256,23 @@ SPA.Events =
         );
 
         self.refreshData();
-    },
-    'refreshData': function()
+    };
+
+    self.getEventById = function( id )
     {
-        var self = SPA.Events;
+        var date_from = SPA.Calendar.getFirstDate();
+        return cache[date_from].find(function(v)
+        {
+            return +v['id'] === +id;
+        });
+    };
+
+    self.refreshData = function()
+    {
         var date_from = SPA.Calendar.getFirstDate();
         var date_till = SPA.Calendar.getLastDate();
 
-        if ( !self.data.hasOwnProperty( date_from ) )
+        if ( !cache.hasOwnProperty( date_from ) )
         {
             SPA.Loader.show();
             SPA.Calendar.disableButtons();
@@ -290,10 +287,10 @@ SPA.Events =
                 'url'       : '/ajax/events/get',
                 'success'   : function (data, textStatus, jqXHR)
                 {
-                    self.data[date_from] = data;
+                    cache[date_from] = data;
                     SPA.Loader.hide();
                     SPA.Calendar.enableButtons();
-                    SPA.Calendar.renderEvents( self.data[date_from] );
+                    SPA.Calendar.renderEvents( cache[date_from] );
                 },
                 'error'     : function (jqXHR, textStatus, errorThrown)
                 {
@@ -303,14 +300,14 @@ SPA.Events =
         }
         else
         {
-            SPA.Calendar.renderEvents( self.data[date_from] );
+            SPA.Calendar.renderEvents( cache[date_from] );
         }
-    },
-    '_showModal': function( title, data, is_add, can_change )
+    };
+
+    self._showModal = function( title, data, is_add, can_change )
     {
         can_change  = typeof can_change === 'undefined' ? true : can_change;
         is_add      = typeof is_add     === 'undefined' ? true : is_add;
-        var self = SPA.Events;
         var modal_body, modal_footer;
         if ( can_change )
         {
@@ -450,23 +447,23 @@ SPA.Events =
                                 }
                                 else
                                 {
-                                    for( var date_from in self.data )
+                                    for( var date_from in cache )
                                     {
-                                        if ( self.data.hasOwnProperty( date_from ) )
+                                        if ( cache.hasOwnProperty( date_from ) )
                                         {
-                                            var old_data_index = self.data[date_from].findIndex(function(v)
+                                            var old_event = cache[date_from].find(function(v)
                                             {
-                                                return +v['id'] === +data['id'];
+                                                return +v['id'] === +response['id'];
                                             });
-                                            event = $.extend(true, {}, event, {'id': response['id']});
-                                            if ( old_data_index !== -1 )
+                                            $.extend(true, event, {'id': response['id']});
+                                            if ( typeof old_event !== 'undefined' )
                                             {
-                                                $.extend(true, self.data[date_from][old_data_index], event);
+                                                $.extend(true, old_event, event);
                                             }
                                             else
                                             {
                                                 event['author_id'] = SPA.User.getId();
-                                                self.data[date_from].push( event );
+                                                cache[date_from].push( event );
                                             }
                                         }
                                     }
@@ -507,15 +504,18 @@ SPA.Events =
                                 }
                                 else
                                 {
-                                    for( var date_from in self.data )
+                                    for( var date_from in cache )
                                     {
-                                        if ( self.data.hasOwnProperty( date_from ) )
+                                        if ( cache.hasOwnProperty( date_from ) )
                                         {
-                                            var data_index  = SPA.Events.data[date_from].findIndex(function(v)
+                                            var cache_index  = cache[date_from].findIndex(function(v)
                                             {
                                                 return +v['id'] === +id;
                                             });
-                                            SPA.Events.data[date_from].splice(data_index,1);
+                                            if ( cache_index > -1 )
+                                            {
+                                                cache[date_from].splice(cache_index,1);
+                                            }
                                         }
                                     }
                                     self.refreshData();
@@ -531,13 +531,15 @@ SPA.Events =
                 )
             }
         ).modal('show');
-    },
-    '_hideModal': function()
+    };
+
+    self._hideModal = function()
     {
-        var self = SPA.Events;
         $('#event').modal('hide');
-    }
-};
+    };
+
+    return self;
+})();
 
 SPA.Registration =
 {
