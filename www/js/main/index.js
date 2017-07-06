@@ -461,10 +461,11 @@ SPA.Events =
                                             event = $.extend(true, {}, event, {'id': response['id']});
                                             if ( old_data_index !== -1 )
                                             {
-                                                self.data[date_from][old_data_index] = $.extend(true, {}, event);
+                                                $.extend(true, self.data[date_from][old_data_index], event);
                                             }
                                             else
                                             {
+                                                event['author_id'] = SPA.User.getId();
                                                 self.data[date_from].push( event );
                                             }
                                         }
@@ -542,14 +543,20 @@ SPA.Registration =
 {
     init: function()
     {
-        var self = SPA.Registration;
-        $('#registration-invite').on(
-            'click',
-            function()
-            {
-                self._showInviteModal();
-            }
-        );
+        if ( !SPA.User.isAdmin() )
+        {
+            $('#registration-invite').remove();
+        }
+        else
+        {
+            $('#registration-invite').on(
+                'click',
+                function()
+                {
+                    SPA.Registration._showInviteModal();
+                }
+            );
+        }
     },
     _showInviteModal: function()
     {
@@ -882,6 +889,7 @@ SPA.Login =
                                     SPA.Calendar.init();
                                     SPA.Loader.hide();
                                     SPA.Events.init();
+                                    SPA.Registration.init();
                                 }
                             },
                             'error'     : function (jqXHR, textStatus, errorThrown)
@@ -1021,15 +1029,14 @@ $(document).ready(function()
 {
     SPA.Login.init();
     SPA.Loader.show();
-    SPA.Registration.init();
     SPA.Login.isAuth(
         function( data )
         {
-
             SPA.setUser( data );
             SPA.Calendar.init();
             SPA.Loader.hide();
             SPA.Events.init();
+            SPA.Registration.init();
         },
         function()
         {

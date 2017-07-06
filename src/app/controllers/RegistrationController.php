@@ -58,6 +58,15 @@ namespace controllers
                 die('[]');
             }
 
+            $users = new users();
+            if ( !$users->isAdmin() )
+            {
+                die(json_encode([
+                    'error'     => 1,
+                    'message'   => $this->core->i18n('registration_invite_error_not_admin')
+                ]));
+            }
+
             $email = $this->request->getPost('email', 'email', '');
             if ( strlen( $email ) === 0 )
             {
@@ -67,7 +76,6 @@ namespace controllers
             }
 
             $reg_code = $this->_createRegCode();
-            $users = new users();
             if ( !$users->addRegCode( $email, $reg_code ) )
             {
                 die(json_encode([

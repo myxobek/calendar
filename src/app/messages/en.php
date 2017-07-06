@@ -37,4 +37,6 @@ return
     'registration_index_error_empty'    => 'Error. Empty fields',
     'registration_index_error_code'     => 'Error. Wrong registration code',
 
+    'registration_invite_error_not_admin'   => 'Error. Only administrator can add new people',
+
 ];
