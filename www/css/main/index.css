@@ -39,6 +39,14 @@ html,body {
     position: relative;
 }
 
+.col-no-padding-left {
+    padding-left: 0;
+}
+
+.col-no-padding-right {
+    padding-right: 0;
+}
+
 .cell-6 {
     height: calc(100% / 6);
 }
@@ -61,6 +69,14 @@ html,body {
     padding-left: 5px;
 }
 
+#calendar .cell {
+    cursor: cell;
+}
+
+#calendar .cell-event {
+    cursor: pointer;
+}
+
 #panel {
     position: absolute;
     top: 0;
@@ -73,6 +89,10 @@ html,body {
 
 #panel .btn {
     cursor: pointer;
+}
+
+textarea {
+    resize: none;
 }
 
 #loader-wrapper {

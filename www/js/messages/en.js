@@ -28,11 +28,22 @@ i18n.translator.add({
         "login_not_found"       : "User Not Found",
 
         "event_add_title"       : "Create new event",
+        "event_change_title"    : "Event",
         "event_modal_title"     : "Title",
+        "event_modal_date_from" : "Date (from)",
+        "event_modal_date_till" : "Date (till)",
+        "event_modal_description"   : "Description",
+        "event_modal_status"    : "Status",
+        "event_modal_color"     : "Color",
         "event_modal_save"      : "Save",
         "event_modal_delete"    : "Delete",
         "event_modal_cancel"    : "Cancel",
         "main_index_event_error": "Error",
+        "event_status"          : [
+            [1,1, "New"],
+            [2,2, "In Progress"],
+            [3,3, "Done"],
+        ],
 
         "invite_modal_title"    : "Invite new user",
         "invite_modal_email"    : "E-mail",

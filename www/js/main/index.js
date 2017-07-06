@@ -1,6 +1,24 @@
 var SPA =
 {
+    setUser: function( data )
+    {
+        SPA.User = (function(id, is_admin)
+        {
+            var self = {};
 
+            self.isAdmin = function()
+            {
+                return !!+is_admin;
+            };
+
+            self.getId = function()
+            {
+                return +id;
+            };
+
+            return self;
+        })( data['id'] || 0, data['is_admin'] || false );
+    }
 };
 
 SPA.Calendar =
@@ -219,7 +237,7 @@ SPA.Events =
                 self._showModal( i18n('event_add_title'), {
                     'date_from': date,
                     'date_till': date
-                }, true );
+                } );
             }
         );
 
@@ -240,7 +258,12 @@ SPA.Events =
                         break;
                     }
                 }
-                self._showModal( i18n('event_add_title'), event );
+                self._showModal(
+                    i18n('event_change_title'),
+                    event,
+                    false,
+                    SPA.User.isAdmin() || ( SPA.User.getId() === +event['author_id'] )
+                );
             }
         );
 
@@ -283,47 +306,88 @@ SPA.Events =
             SPA.Calendar.renderEvents( self.data[date_from] );
         }
     },
-    '_showModal': function( title, data, is_add )
+    '_showModal': function( title, data, is_add, can_change )
     {
-        is_add = typeof is_add === 'undefined' ? false : is_add;
+        can_change  = typeof can_change === 'undefined' ? true : can_change;
+        is_add      = typeof is_add     === 'undefined' ? true : is_add;
         var self = SPA.Events;
-        var modal_body = '<input type="hidden" id="event-id" value="' + ( data['id'] || '' ) + '">' +
+        var modal_body, modal_footer;
+        if ( can_change )
+        {
+            modal_body = '<input type="hidden" id="event-id" value="' + ( data['id'] || '' ) + '">' +
             '<div>' +
                 '<div class="form-group">' +
+                    '<label for="event-title">' + i18n('event_modal_title') + '</label>' +
                     '<input type="text" class="form-control" id="event-title" placeholder="' + i18n('event_modal_title') + '" value="' + ( data['title'] || '' ) + '"/>' +
                 '</div>' +
-                '<div class="form-group col-md-6">' +
+                '<div class="form-group col-xs-6 col-no-padding-left">' +
+                    '<label for="event-title">' + i18n('event_modal_date_from') + '</label>' +
                     '<input type="text" class="form-control" id="event-date_from" value="' + ( data['date_from'] || SPA.DateHelper.formatDate(new Date()) ) + '"/>' +
                 '</div>' +
-                '<div class="form-group col-md-6">' +
+                '<div class="form-group col-xs-6 col-no-padding-right">' +
+                    '<label for="event-title">' + i18n('event_modal_date_till') + '</label>' +
                     '<input type="text" class="form-control" id="event-date_till" value="' + ( data['date_till'] || SPA.DateHelper.formatDate(new Date()) ) + '"/>' +
                 '</div>' +
                 '<div class="form-group">' +
+                    '<label for="event-title">' + i18n('event_modal_description') + '</label>' +
                     '<textarea class="form-control" id="event-description">' + ( data['description'] || '' ) + '</textarea>' +
                 '</div>' +
                 '<div class="form-group">' +
+                    '<label for="event-title">' + i18n('event_modal_status') + '</label>' +
                     '<select class="form-control" id="event-status">' +
-                        '<option value="1" ' + ( data['status'] && +data['status'] === 1 ? 'selected' : '' ) + '>To Do</option>' +
-                        '<option value="2" ' + ( data['status'] && +data['status'] === 2 ? 'selected' : '' ) + '>In Progress</option>' +
-                        '<option value="3" ' + ( data['status'] && +data['status'] === 3 ? 'selected' : '' ) + '>Done</option>' +
+                        '<option value="1" ' + ( data['status'] && +data['status'] === 1 ? 'selected' : '' ) + '>' + i18n('event_status', 1) + '</option>' +
+                        '<option value="2" ' + ( data['status'] && +data['status'] === 2 ? 'selected' : '' ) + '>' + i18n('event_status', 2) + '</option>' +
+                        '<option value="3" ' + ( data['status'] && +data['status'] === 3 ? 'selected' : '' ) + '>' + i18n('event_status', 3) + '</option>' +
                     '</select>' +
                 '</div>' +
                 '<div class="form-group">' +
-                    '<input type="color" id="event-color" value="' + ( data['color'] || '#ff0000' ) + '">' +
+                    '<label for="event-title">' + i18n('event_modal_color') + '</label>' +
+                    '<input type="color" class="form-control" id="event-color" value="' + ( data['color'] || '#ff0000' ) + '">' +
                 '</div>' +
             '</div>';
-        var modal_footer = '<div class="row">' +
-            '<div class="col-xs-6 text-left">' +
-                (
-                    is_add
-                    ? '<button type="button" class="btn btn-cancel" data-dismiss="modal" aria-label="Close">' + i18n('event_modal_cancel') + '</button>'
-                    : '<button type="button" class="btn btn-danger" id="event-delete"">' + i18n('event_modal_delete') + '</button>'
-                ) +
-            '</div>' +
-            '<div class="col-xs-6 text-right">' +
-                '<button type="button" class="btn btn-primary" id="event-save">' + i18n('event_modal_save') + '</button>' +
-            '</div>' +
-        '</div>';
+            modal_footer = '<div class="row">' +
+                '<div class="col-xs-6 text-left">' +
+                    (
+                        is_add
+                            ? '<button type="button" class="btn btn-cancel" data-dismiss="modal" aria-label="Close">' + i18n('event_modal_cancel') + '</button>'
+                            : '<button type="button" class="btn btn-danger" id="event-delete"">' + i18n('event_modal_delete') + '</button>'
+                    ) +
+                '</div>' +
+                '<div class="col-xs-6 text-right">' +
+                    '<button type="button" class="btn btn-primary" id="event-save">' + i18n('event_modal_save') + '</button>' +
+                '</div>' +
+            '</div>';
+        }
+        else
+        {
+            modal_body = '<div>' +
+                '<div class="form-group">' +
+                    '<label>' + i18n('event_modal_title') + '</label>' +
+                    '<span class="form-control">' + ( data['title'] || '' ) + '</span>' +
+                '</div>' +
+                '<div class="form-group col-md-6 col-no-padding-left">' +
+                    '<label>' + i18n('event_modal_date_from') + '</label>' +
+                    '<span class="form-control">' + ( data['date_from'] || SPA.DateHelper.formatDate(new Date()) ) + '</span>' +
+                '</div>' +
+                '<div class="form-group col-md-6 col-no-padding-right">' +
+                    '<label>' + i18n('event_modal_date_till') + '</label>' +
+                    '<span class="form-control">' + ( data['date_till'] || SPA.DateHelper.formatDate(new Date()) ) + '</span>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + i18n('event_modal_description') + '</label>' +
+                    '<p class="form-control">' + ( data['description'] || '' ) + '</p>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + i18n('event_modal_status') + '</label>' +
+                    '<span class="form-control">' + i18n('event_status', +data['status'] || 1 ) + '</span>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>' + i18n('event_modal_color') + '</label>' +
+                    '<input class="form-control" type="color" disabled value="' + ( data['color'] || '#ff0000' ) + '">' +
+                '</div>' +
+            '</div>';
+            modal_footer = '';
+        }
         SPA.Modals.get(
             'event',
             {
@@ -491,6 +555,7 @@ SPA.Registration =
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
+                '<label for="invite-email">' + i18n('invite_modal_email') + '</label>' +
                 '<input type="text" class="form-control" id="invite-email" placeholder="' + i18n('invite_modal_email') + '" value=""/>' +
             '</div>' +
         '</div>';
@@ -555,9 +620,11 @@ SPA.Registration =
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
+                '<label for="registration-reg_code">' + i18n('registration_modal_reg_code') + '</label>' +
                 '<input type="text" class="form-control" id="registration-reg_code" placeholder="' + i18n('registration_modal_reg_code') + '"/>' +
             '</div>' +
             '<div class="form-group">' +
+            '<label for="registration-password">' + i18n('registration_modal_password') + '</label>' +
                 '<input type="password" class="form-control" id="registration-password" placeholder="' + i18n('registration_modal_password') + '"/>' +
             '</div>' +
         '</div>';
@@ -693,6 +760,8 @@ SPA.DateHelper =
     },
 };
 
+SPA.User = null;
+
 SPA.Login =
 {
     init: function()
@@ -719,11 +788,11 @@ SPA.Login =
                 {
                     if ( data.hasOwnProperty('is_auth') && data['is_auth'] )
                     {
-                        onAuth();
+                        onAuth( data );
                     }
                     else
                     {
-                        onLogin();
+                        onLogin( data );
                     }
                 }
                 else
@@ -751,9 +820,11 @@ SPA.Login =
     {
         var modal_body = '<div>' +
             '<div class="form-group">' +
+                '<label for="invite-email">' + i18n('login_modal_email') + '</label>' +
                 '<input type="text" class="form-control" id="login-email" placeholder="' + i18n('login_modal_email') + '"/>' +
             '</div>' +
             '<div class="form-group">' +
+                '<label for="invite-email">' + i18n('login_modal_password') + '</label>' +
                 '<input type="password" class="form-control" id="login-password" placeholder="' + i18n('login_modal_password') + '"/>' +
             '</div>' +
         '</div>';
@@ -806,6 +877,7 @@ SPA.Login =
                                 }
                                 else
                                 {
+                                    SPA.setUser( data );
                                     SPA.Login.hide();
                                     SPA.Calendar.init();
                                     SPA.Loader.hide();
@@ -951,8 +1023,10 @@ $(document).ready(function()
     SPA.Loader.show();
     SPA.Registration.init();
     SPA.Login.isAuth(
-        function()
+        function( data )
         {
+
+            SPA.setUser( data );
             SPA.Calendar.init();
             SPA.Loader.hide();
             SPA.Events.init();

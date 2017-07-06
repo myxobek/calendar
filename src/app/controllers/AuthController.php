@@ -38,8 +38,9 @@ namespace controllers
             if ( $users->login($email, $password) === true )
             {
                 die(json_encode([
-                    'ok'    => 1,
-                    'id'    => $users->getId(),
+                    'ok'        => 1,
+                    'id'        => $users->getId(),
+                    'is_admin'  => $users->isAdmin()
                 ]));
             }
             else
@@ -66,7 +67,8 @@ namespace controllers
             die(json_encode([
                 'ok'        => 1,
                 'is_auth'   => $users->isAuth(),
-                'id'        => $users->getId()
+                'id'        => $users->getId(),
+                'is_admin'  => $users->isAdmin()
             ]));
         }
 
