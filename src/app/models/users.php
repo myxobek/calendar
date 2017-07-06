@@ -16,7 +16,7 @@ namespace models
             {
                 $password = $this->_hashPassword($password);
                 $db = $this->getDI()->get('db')->exec([
-                    'query' => 'SELECT id, email, options->\'is_admin\' as "is_admin" 
+                    'query' => 'SELECT id, email, options->>\'is_admin\' as "is_admin" 
 FROM calendar.users 
 WHERE email=:email AND password=crypt(:password, password)',
                     'binds'  => [
