@@ -2,6 +2,9 @@
 
 namespace controllers
 {
+
+    use models\users;
+
     /**
      * MainController
      */
@@ -34,8 +37,13 @@ namespace controllers
             // set title
             $this->page->setTitle($this->core->i18n('title_main_index'), true);
 
+            $users = new users();
+
             // set vars
-            $this->_setVars();
+            $this->_setVars([
+                'is_admin'  => $users->isAdmin(),
+                'email'     => $this->session->get('email', '')
+            ]);
         }
 
         ///////////////////////////////////////////////////////////////////////////

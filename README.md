@@ -17,4 +17,4 @@ Simple calendar
 ### Admin account
 Email: admin@admin.admin
 
-Password: 11111111
+Password: 1234567890

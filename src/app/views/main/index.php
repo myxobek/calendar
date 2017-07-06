@@ -17,6 +17,10 @@
                     <button type="button" class="btn btn-default" id="next-month" title="<?= $this->core->i18n('btn_title_next_month') ?>"><i class="glyphicon glyphicon-arrow-right"></i></button>
                 </div>
                 <div class="btn-group">
+                    <?= $email ?>
+                    <?= ( $is_admin ? '<i class="glyphicon glyphicon-star"></i>' : '' ) ?>
+                </div>
+                <div class="btn-group">
                     <a href="/auth/logout" class="btn btn-danger" title="<?= $this->core->i18n('btn_title_logout') ?>"><i class="glyphicon glyphicon-log-out"></i></a>
                 </div>
             </div>
